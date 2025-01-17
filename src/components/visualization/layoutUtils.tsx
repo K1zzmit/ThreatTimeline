@@ -284,14 +284,43 @@ export const calculateLayout = (events: TimelineEvent[]): { nodes: Node[], edges
   // Create color map for parent-child relationships
   const colorMap = new Map<string, string>();
   const siblingColorMap = new Map<string, string>(); // Maps parent ID to children's color
-  const colors = [
-    'rgb(59, 130, 246)', // blue
-    'rgb(16, 185, 129)', // green
-    'rgb(217, 70, 239)', // purple
-    'rgb(245, 158, 11)', // orange
-    'rgb(148, 163, 184)', // gray
-  ];
+  const colors = {
+    root: 'rgb(59, 171, 246)', // root
+    blue: 'rgb(59, 131, 246)', // blue
+    green: 'rgb(34, 197, 94)', // green
+    purple: 'rgb(151, 74, 202)', // purple
+    orange: 'rgb(249, 115, 22)', // orange
+    pink: 'rgb(236, 72, 153)', // pink
+    teal: 'rgb(20, 184, 166)', // teal
+    grey: 'rgb(148, 163, 184)', // grey
+  };
 
+  let parentColor;
+  for (let event of events ) {
+    if (event.parentId) {
+      parentColor = events.find(e => e.id === event.parentId).color;
+    } else {
+      parentColor = "root";
+    }
+    if (parentColor.includes("root")) {
+      colorMap.set(event.id, colors.root);
+    } else if (parentColor.includes("blue")) {
+      colorMap.set(event.id, colors.blue);
+    } else if (parentColor.includes("green")) {
+      colorMap.set(event.id, colors.green);
+    } else if (parentColor.includes("purple")) {
+      colorMap.set(event.id, colors.purple);
+    } else if (parentColor.includes("orange")) {
+      colorMap.set(event.id, colors.orange);
+    } else if (parentColor.includes("pink")) {
+      colorMap.set(event.id, colors.pink);
+    } else if (parentColor.includes("teal")) {
+      colorMap.set(event.id, colors.teal);
+    } else {
+      colorMap.set(event.id, colors.grey);
+    }
+  }
+  /*
   // First, assign colors to root nodes
   rootEvents.forEach(event => {
     if (!colorMap.has(event.id)) {
@@ -330,7 +359,7 @@ export const calculateLayout = (events: TimelineEvent[]): { nodes: Node[], edges
   rootEvents.forEach(root => {
     assignChildrenColors(root.id);
   });
-
+  */
   // Add regular parent-child edges
   events.forEach(event => {
     if (!event.parentId) return;
