@@ -113,6 +113,11 @@ export const EventItem: React.FC<EventItemProps> = ({
   const getBorderColor = () => {
     try {
       const eventDepth = calculateDepth(event.id);
+      for (let num in events) {
+        if (events[num].id === event.id) {
+          events[num].color = getEventColor(eventDepth).slice(6);
+        }
+      }
       return getEventColor(eventDepth);
     } catch (error) {
       console.error('Error calculating event depth:', error);
