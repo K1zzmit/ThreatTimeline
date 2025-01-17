@@ -82,7 +82,13 @@ const EventNode = ({ data }: { data: TimelineEvent }) => {
   return (
     <div className={cn(
       "px-4 py-2 shadow-lg rounded-lg border bg-background",
-      isRootEvent && "ring-2 ring-primary/50 shadow-primary/20",
+      data.color.includes("blue") && "ring-2 ring-blue-500/50 shadow-blue-500/20",
+      data.color.includes("green") && "ring-2 ring-green-500/50 shadow-green-500/20",
+      data.color.includes("purple") && "ring-2 ring-purple-500/50 shadow-purple-500/20",
+      data.color.includes("orange") && "ring-2 ring-orange-500/50 shadow-orange-500/20",
+      data.color.includes("pink") && "ring-2 ring-pink-500/50 shadow-pink-500/20",
+      data.color.includes("teal") && "ring-2 ring-teal-500/50 shadow-teal-500/20",
+      isRootEvent && "ring-2 ring-primary shadow-primary",
     )}>
       <Handle
         type="target"

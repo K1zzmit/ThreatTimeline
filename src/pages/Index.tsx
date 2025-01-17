@@ -24,6 +24,7 @@ export interface TimelineEvent {
   timezone?: string;
   title: string;
   description: string;
+  color?: string;
   tactic?: string;
   technique?: string;
   parentId?: string;
