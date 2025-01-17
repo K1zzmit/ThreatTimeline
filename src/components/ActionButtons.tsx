@@ -46,7 +46,7 @@ export function ActionButtons({
           <ReportButton incident={incident} events={events} />
         </>
       )}
-
+      
       {page === 'visualization' && (
         <>
           <Button variant="outline" onClick={onResetLayout}>
@@ -56,9 +56,9 @@ export function ActionButtons({
           <Dropdown.DropdownMenu>
             <Dropdown.DropdownMenuTrigger asChild> 
               <Button variant="outline">
-            <Download className="mr-2 h-4 w-4" />
+                <Download className="mr-2 h-4 w-4" />
                 Export
-          </Button>
+              </Button>
             </Dropdown.DropdownMenuTrigger>
 
             <Dropdown.DropdownMenuPortal>
