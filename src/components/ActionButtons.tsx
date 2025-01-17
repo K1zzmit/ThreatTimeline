@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import * as Dropdown from "@/components/ui/dropdown-menu";
 import { Eye, Edit2, RotateCcw, Download } from "lucide-react";
 import { ReportButton } from "@/components/ReportButton";
 import type { TimelineEvent } from "@/pages/Index";
@@ -14,6 +15,7 @@ interface ActionButtonsProps {
   // Visualization specific props
   onResetLayout?: () => void;
   onExportPng?: () => void;
+  onExportSvg?: () => void;
 }
 
 export function ActionButtons({
@@ -23,6 +25,7 @@ export function ActionButtons({
   onEditMode,
   onResetLayout,
   onExportPng,
+  onExportSvg,
   isEditMode,
 }: ActionButtonsProps) {
   return (
@@ -50,10 +53,25 @@ export function ActionButtons({
             <RotateCcw className="mr-2 h-4 w-4" />
             Reset Layout
           </Button>
-          <Button variant="outline" onClick={onExportPng}>
+          <Dropdown.DropdownMenu>
+            <Dropdown.DropdownMenuTrigger asChild> 
+              <Button variant="outline">
             <Download className="mr-2 h-4 w-4" />
-            Export as PNG
+                Export
           </Button>
+            </Dropdown.DropdownMenuTrigger>
+
+            <Dropdown.DropdownMenuPortal>
+				      <Dropdown.DropdownMenuContent align="center">
+                <Dropdown.DropdownMenuItem onClick={onExportPng}>
+                  As PNG
+					      </Dropdown.DropdownMenuItem>
+					      <Dropdown.DropdownMenuItem onClick={onExportSvg} >
+                  As SVG
+					      </Dropdown.DropdownMenuItem>
+              </Dropdown.DropdownMenuContent>
+            </Dropdown.DropdownMenuPortal>    
+          </Dropdown.DropdownMenu>
         </>
       )}
 
