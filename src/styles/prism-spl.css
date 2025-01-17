@@ -1,0 +1,32 @@
+/* Dark theme colors that pop better */
+.language-spl {
+  color: #f8f8f2; /* Default text color */
+}
+
+.language-spl .token.command {
+  color: #ff79c6; /* Pink for commands */
+}
+
+.language-spl .token.sourcetype {
+  color: #50fa7b; /* Green for sourcetype/index declarations */
+}
+
+.language-spl .token.function {
+  color: #ff79c6; /* Pink for SPL functions */
+}
+
+.language-spl .token.string {
+  color: #f1fa8c; /* Yellow for strings */
+}
+
+.language-spl .token.field {
+  color: #8be9fd; /* Cyan for field names */
+}
+
+.language-spl .token.operator {
+  color: #ff79c6; /* Pink for operators */
+}
+
+.language-spl .token.punctuation {
+  color: #f8f8f2; /* Light gray for punctuation */
+} 
