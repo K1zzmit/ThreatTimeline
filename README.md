@@ -68,3 +68,16 @@ The application will be available at `http://localhost:8080`.
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
+
+This means:
+- ✅ You can view and use the code
+- ✅ You can modify the code
+- ✅ You can distribute the code
+- ❌ You cannot use it commercially without sharing your source code
+- ❌ You cannot distribute it under a different license
+
+Copyright (c) 2024 K1zzmit
