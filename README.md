@@ -5,14 +5,20 @@ A visualization tool for mapping and analyzing attack lifecycles using MITRE ATT
 ## Features
 
 - Interactive timeline visualization of attack events
+![image](https://github.com/user-attachments/assets/55646593-209c-4f27-8b0c-5ecd69e1b00c)
 - MITRE ATT&CK framework integration
+![image](https://github.com/user-attachments/assets/7f6b3922-4c06-4c1f-97e3-9b9f7adace3f)
 - Artifact tracking and relationship mapping
+![image](https://github.com/user-attachments/assets/e9877af4-54e8-4f27-9c29-21a850e35844)
+![image](https://github.com/user-attachments/assets/cb25f0d1-45a7-4321-8398-4af65142bbd9)
 - Dynamic event management and editing
 - Visual attack pattern analysis
 - Export timeline as PNG or SVG
 - Export timeline reports in Markdown format
 - Lateral movement tracking and visualization
+![image](https://github.com/user-attachments/assets/d9efe2f5-6933-453c-a0bb-2f3656ccba83)
 - Multi-incident support
+![image](https://github.com/user-attachments/assets/08a2e538-3166-45ee-a0a0-a6ef5bb2ad7d)
 
 ## Tech Stack
 
