@@ -61,32 +61,17 @@ const CustomEdge = ({
   });
   
   return (
-    <>
-      <path
-        d={edgePath}
-        fill="none"
-        style={{
-          ...style,
-          strokeDasharray: isLateralMovement ? '5,5' : 'none',
-          stroke: isLateralMovement ? '#ef4444' : style?.stroke,
-          strokeWidth: isLateralMovement ? 3 : 2,
-          animation: isLateralMovement ? 'dashdraw 0.5s linear infinite' : 'none',
-        }}
-        markerEnd={markerEnd}
-      />
-      <style>
-        {`
-          @keyframes dashdraw {
-            from {
-              stroke-dashoffset: 10;
-            }
-            to {
-              stroke-dashoffset: 0;
-            }
-          }
-        `}
-      </style>
-    </>
+    <path
+      d={edgePath}
+      fill="none"
+      style={{
+        ...style,
+        strokeDasharray: isLateralMovement ? '5,5' : 'none',
+        stroke: isLateralMovement ? '#ef4444' : style?.stroke,
+        strokeWidth: isLateralMovement ? 3 : 2,
+      }}
+      markerEnd={markerEnd}
+    />
   );
 };
 
