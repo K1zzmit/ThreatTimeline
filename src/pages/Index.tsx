@@ -10,6 +10,7 @@ import { Eye, Edit2, Database, RotateCcw, Download, Clock, NetworkIcon } from "l
 import { useIncidents } from "@/lib/incidents";
 import type { XYPosition } from "reactflow";
 import { ReportButton } from "@/components/ReportButton";
+import { ImportButton } from "@/components/ImportButton";
 import { IncidentSelector } from "@/components/IncidentSelector";
 
 export interface NetworkDetails {
@@ -227,11 +228,56 @@ export default function Index() {
             onUpdateEvent={handleUpdateEvent}
             onDeleteEvent={handleDeleteEvent}
             isEditMode={isEditMode}
+            onEditModeToggle={() => setIsEditMode(!isEditMode)}
             onSelectEvent={(event) => {
               toast({
                 title: "Event Selected",
                 description: `Selected: ${event.title || 'Untitled Event'}`,
               });
+            }}
+            onImport={({ incident: importedIncident, events: importedEvents }) => {
+              try {
+                // Create a new incident
+                const newIncidentId = createIncident(
+                  importedIncident.name || "Imported Incident",
+                  importedIncident.description
+                );
+
+                if (!newIncidentId) {
+                  throw new Error("Failed to create incident");
+                }
+
+                // Update the events, preserving their relationships
+                const eventMap = new Map<string, string>();
+                const updatedEvents = importedEvents.map(event => {
+                  const newId = uuidv4();
+                  eventMap.set(event.id, newId);
+                  return {
+                    ...event,
+                    id: newId,
+                    parentId: event.parentId ? eventMap.get(event.parentId) : undefined,
+                    lateralMovementTarget: event.lateralMovementTarget ? eventMap.get(event.lateralMovementTarget) : undefined
+                  };
+                });
+
+                // Update the incident with the new events
+                updateEvents(newIncidentId, updatedEvents);
+                
+                // Switch to the new incident
+                setActiveIncident(newIncidentId);
+
+                toast({
+                  title: "Import Successful",
+                  description: `Imported incident "${importedIncident.name}" with ${importedEvents.length} events`,
+                });
+              } catch (error) {
+                console.error('Error importing incident:', error);
+                toast({
+                  title: "Import Failed",
+                  description: "Failed to import the incident. Please try again.",
+                  variant: "destructive"
+                });
+              }
             }}
             onLateralMovement={(sourceEvent, destinationHost) => {
               if (!activeIncidentId || !activeIncident) return;
@@ -246,14 +292,22 @@ export default function Index() {
                 destHostname = ipMatch[1];
                 destIP = ipMatch[2];
               } else {
-                // If no parentheses, the value could be either hostname or IP
                 destHostname = destinationHost;
               }
-              
+
+              // Find the maximum order in current events
+              const maxOrder = Math.max(0, ...activeIncident.events.map(e => e.order || 0));
+
+              // Get source host information from the source event's artifacts or host field
+              const sourceHostArtifact = sourceEvent.artifacts.find(a => a.type === 'hostname' && a.name === 'Source Host');
+              const sourceHostname = sourceHostArtifact?.value || sourceEvent.host || '';
+              const sourceIP = sourceHostArtifact?.linkedValue;
+
               // Create the initial access event
               const initialAccessEvent: TimelineEvent = {
                 id: uuidv4(),
-                timestamp: new Date().toISOString().slice(0, 16),
+                timestamp: "", // Leave timestamp blank for user to fill in
+                timezone: sourceEvent.timezone,
                 title: `Initial Access on ${destHostname || destIP}`,
                 description: ``,
                 tactic: "Initial Access",
@@ -266,45 +320,49 @@ export default function Index() {
                     linkedValue: destIP && destHostname ? destIP : undefined
                   }
                 ],
-                host: destHostname || destIP
+                host: destHostname || destIP,
+                parentId: undefined,
+                order: maxOrder + 1
               };
               
-              // Update the source event with lateral movement information
-              const updatedSourceEvent: TimelineEvent = {
-                ...sourceEvent,
-                tactic: "Lateral Movement",
-                technique: "Remote Services",
-                artifacts: [
-                  ...sourceEvent.artifacts.filter(a => !['Source Host', 'Destination Host'].includes(a.name)),
-                  sourceEvent.artifacts.find(a => a.name === 'Source Host') || {
-                    type: "hostname" as const,
-                    name: "Source Host",
-                    value: sourceEvent.host || '',
-                  },
-                  {
-                    type: "hostname" as const,
-                    name: "Destination Host",
-                    value: destHostname || destIP || '',
-                    linkedValue: destIP && destHostname ? destIP : undefined
-                  }
-                ],
-                lateralMovementTarget: initialAccessEvent.id
-              };
+              // Update the source event with lateral movement info
+              const updatedEvents = activeIncident.events.map(event => {
+                if (event.id === sourceEvent.id) {
+                  return {
+                    ...event,
+                    tactic: "Lateral Movement",
+                    technique: "Remote Services",
+                    artifacts: [
+                      ...event.artifacts.filter(a => !['Source Host', 'Destination Host'].includes(a.name)),
+                      {
+                        type: "hostname" as const,
+                        name: "Source Host",
+                        value: sourceHostname,
+                        linkedValue: sourceIP
+                      },
+                      {
+                        type: "hostname" as const,
+                        name: "Destination Host",
+                        value: destHostname || destIP || '',
+                        linkedValue: destIP && destHostname ? destIP : undefined
+                      }
+                    ],
+                    lateralMovementTarget: initialAccessEvent.id
+                  };
+                }
+                return event;
+              });
               
-              // Update events in the active incident
-              const updatedEvents = activeIncident.events.map(event =>
-                event.id === sourceEvent.id ? updatedSourceEvent : event
-              );
+              // Add the new initial access event
               updatedEvents.push(initialAccessEvent);
               
               updateEvents(activeIncidentId, updatedEvents);
               
               toast({
                 title: "Lateral Movement Created",
-                description: `Added lateral movement to ${destinationHost}`,
+                description: `Added lateral movement to ${destinationHost}. Please set the timestamp for the new event.`,
               });
             }}
-            onEditModeToggle={() => setIsEditMode(!isEditMode)}
           />
         </TabsContent>
 
