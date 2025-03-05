@@ -58,6 +58,11 @@ export function IncidentSelector({
     }
   };
 
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDeleteDialogOpen(true);
+  };
+
   return (
     <div className="flex items-center gap-2">
       <Select
@@ -111,36 +116,35 @@ export function IncidentSelector({
       </Dialog>
 
       {activeIncidentId && (
-        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="icon">
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Delete Incident</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to delete this incident? This action cannot be undone.
-                All events associated with this incident will be permanently deleted.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter className="flex gap-2 justify-end">
-              <Button
-                variant="outline"
-                onClick={() => setIsDeleteDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={handleDeleteIncident}
-              >
-                Delete
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleDeleteClick}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+
+          <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Delete Incident</DialogTitle>
+                <DialogDescription>
+                  Are you sure you want to delete this incident? This action cannot be undone.
+                  All events associated with this incident will be permanently deleted.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter className="flex gap-2 justify-end">
+                <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button variant="destructive" onClick={handleDeleteIncident}>
+                  Delete
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </>
       )}
     </div>
   );
