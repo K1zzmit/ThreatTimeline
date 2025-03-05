@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import ReactFlow, { 
   Background, 
   Controls, 
@@ -151,46 +151,40 @@ const Flow: React.FC<VisualizationProps> = ({
     }
   };
 
-  const handleExportSvg = async () => {
-    if (reactFlowWrapper.current === null) {
-      return;
+  const handleExportPng = useCallback(async () => {
+    if (!reactFlowWrapper.current) return;
+
+    try {
+      const dataUrl = await toPng(reactFlowWrapper.current, {
+        backgroundColor: "#1a1a1a",
+        quality: 1,
+      });
+      
+      const link = document.createElement("a");
+      link.download = "threat-timeline.png";
+      link.href = dataUrl;
+      link.click();
+    } catch (error) {
+      console.error("Error exporting PNG:", error);
     }
-    
-    const nodesBounds = getNodesBounds(nodes);
-    const transform = getViewportForBounds(nodesBounds, 1280, 720, 0.5, 2);
-    
-    const dataUrl = await toSvg<HTMLElement>(document.querySelector('.react-flow__viewport'), {});
+  }, []);
 
-    const link = document.createElement('a');
-    link.download = 'threat-timeline.svg';
-    link.href = dataUrl;
-    link.click();
-  };
+  const handleExportSvg = useCallback(async () => {
+    if (!reactFlowWrapper.current) return;
 
-  const handleExportPng = async () => {
-    if (reactFlowWrapper.current === null) {
-      return;
+    try {
+      const dataUrl = await toSvg(reactFlowWrapper.current, {
+        backgroundColor: "#1a1a1a",
+      });
+      
+      const link = document.createElement("a");
+      link.download = "threat-timeline.svg";
+      link.href = dataUrl;
+      link.click();
+    } catch (error) {
+      console.error("Error exporting SVG:", error);
     }
-
-    const nodesBounds = getNodesBounds(nodes);
-    const transform = getViewportForBounds(nodesBounds, 1280, 720, 0.5, 2);
-    
-    const dataUrl = await toPng<HTMLElement>(document.querySelector('.react-flow__viewport'), {
-      backgroundColor: '#aaaaaa',
-      width: 1280,
-      height: 720,
-      style: {
-        width: '1280px',
-        height: '720px',
-        transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.zoom})`,
-      },
-    });
-
-    const link = document.createElement('a');
-    link.download = 'threat-timeline.png';
-    link.href = dataUrl;
-    link.click();
-  };
+  }, []);
 
   // Update nodes and edges when events change or saved positions change
   React.useEffect(() => {
@@ -258,9 +252,8 @@ const Flow: React.FC<VisualizationProps> = ({
           <ActionButtons
             page="visualization"
             onResetLayout={onResetRequest}
-            onExportSvg={handleExportSvg}
             onExportPng={handleExportPng}
-            events={events}
+            onExportSvg={handleExportSvg}
           />
         </Panel>
         <Background />
