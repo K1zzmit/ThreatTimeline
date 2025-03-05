@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Upload } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -20,14 +20,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { IncidentSettings } from './IncidentSettings';
 import type { Incident } from '@/lib/types';
+import type { TimelineEvent } from '@/pages/Index';
+import { useToast } from '@/components/ui/use-toast';
 
 interface IncidentSelectorProps {
   incidents: Record<string, Incident>;
   activeIncidentId: string | null;
-  onCreateIncident: (name: string, description?: string) => void;
+  onCreateIncident: (name: string, description?: string) => string;
   onSelectIncident: (id: string) => void;
   onDeleteIncident: (id: string) => void;
+  onRenameIncident: (id: string, name: string) => void;
+  onImportIncident: (data: { incident: Incident; events: TimelineEvent[] }) => void;
+  events?: TimelineEvent[];
 }
 
 export function IncidentSelector({
@@ -36,11 +42,16 @@ export function IncidentSelector({
   onCreateIncident,
   onSelectIncident,
   onDeleteIncident,
+  onRenameIncident,
+  onImportIncident,
+  events = [],
 }: IncidentSelectorProps) {
+  const { toast } = useToast();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [newIncidentName, setNewIncidentName] = useState('');
   const [newIncidentDescription, setNewIncidentDescription] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleCreateIncident = () => {
     if (newIncidentName.trim()) {
@@ -51,16 +62,68 @@ export function IncidentSelector({
     }
   };
 
-  const handleDeleteIncident = () => {
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
     if (activeIncidentId) {
       onDeleteIncident(activeIncidentId);
       setIsDeleteDialogOpen(false);
     }
   };
 
-  const handleDeleteClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsDeleteDialogOpen(true);
+  const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target?.result as string);
+        console.log('Importing data:', data); // For debugging
+        
+        // Check if the data has the correct structure
+        if (!data.incident) {
+          throw new Error('Invalid file format: missing incident data');
+        }
+
+        // Get events from either location
+        const eventsFromIncident = data.incident.events || [];
+        const eventsFromRoot = data.events || [];
+        const combinedEvents = eventsFromRoot.length > 0 ? eventsFromRoot : eventsFromIncident;
+
+        const importData = {
+          incident: {
+            ...data.incident,
+            events: combinedEvents
+          },
+          events: combinedEvents
+        };
+
+        onImportIncident(importData);
+        setIsCreateDialogOpen(false);
+        
+        toast({
+          title: "Incident Imported",
+          description: `Successfully imported incident: ${data.incident.name} with ${combinedEvents.length} events`,
+        });
+      } catch (error) {
+        console.error('Error importing incident:', error);
+        toast({
+          title: "Import Failed",
+          description: error instanceof Error ? error.message : "Failed to import incident. Please check the file format.",
+          variant: "destructive",
+        });
+      }
+    };
+    reader.readAsText(file);
+
+    // Reset the file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   return (
@@ -110,13 +173,40 @@ export function IncidentSelector({
                 placeholder="Enter incident description"
               />
             </div>
+            <div className="grid gap-2">
+              <Label>Import Incident</Label>
+              <div className="flex gap-2">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleImport}
+                  accept=".json"
+                  className="hidden"
+                />
+                <Button
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full"
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Import from File
+                </Button>
+              </div>
+            </div>
           </div>
-          <Button onClick={handleCreateIncident}>Create Incident</Button>
+          <DialogFooter>
+            <Button onClick={handleCreateIncident}>Create Incident</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {activeIncidentId && (
         <>
+          <IncidentSettings
+            incident={incidents[activeIncidentId]}
+            events={events}
+            onRename={(name) => onRenameIncident(activeIncidentId, name)}
+          />
           <Button
             variant="outline"
             size="icon"
@@ -138,7 +228,7 @@ export function IncidentSelector({
                 <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button variant="destructive" onClick={handleDeleteIncident}>
+                <Button variant="destructive" onClick={handleDeleteConfirm}>
                   Delete
                 </Button>
               </DialogFooter>

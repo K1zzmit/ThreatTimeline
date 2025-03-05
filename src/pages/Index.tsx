@@ -193,13 +193,70 @@ export default function Index() {
 
   return (
     <div className="container mx-auto p-4 space-y-4">
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between mb-4">
         <IncidentSelector
           incidents={incidents}
           activeIncidentId={activeIncidentId}
           onCreateIncident={createIncident}
           onSelectIncident={setActiveIncident}
           onDeleteIncident={deleteIncident}
+          onRenameIncident={(id, name) => {
+            if (!id) return;
+            updateIncident(id, { name });
+          }}
+          onImportIncident={({ incident: importedIncident, events: importedEvents }) => {
+            try {
+              // Create a new incident with all imported incident details
+              const newIncidentId = createIncident(
+                importedIncident.name || "Imported Incident",
+                importedIncident.description
+              );
+
+              if (!newIncidentId) {
+                throw new Error("Failed to create incident");
+              }
+
+              // Update the incident with all imported details
+              updateIncident(newIncidentId, {
+                name: importedIncident.name,
+                description: importedIncident.description,
+                createdAt: importedIncident.createdAt,
+                updatedAt: importedIncident.updatedAt
+              });
+
+              // Update the events, preserving their relationships
+              const eventMap = new Map<string, string>();
+              const updatedEvents = importedEvents.map(event => {
+                const newId = uuidv4();
+                eventMap.set(event.id, newId);
+                return {
+                  ...event,
+                  id: newId,
+                  parentId: event.parentId ? eventMap.get(event.parentId) : undefined,
+                  lateralMovementTarget: event.lateralMovementTarget ? eventMap.get(event.lateralMovementTarget) : undefined
+                };
+              });
+
+              // Update the incident with the new events
+              updateEvents(newIncidentId, updatedEvents);
+              
+              // Switch to the new incident
+              setActiveIncident(newIncidentId);
+
+              toast({
+                title: "Import Successful",
+                description: `Imported incident "${importedIncident.name}" with ${importedEvents.length} events`,
+              });
+            } catch (error) {
+              console.error('Error importing incident:', error);
+              toast({
+                title: "Import Failed",
+                description: "Failed to import the incident. Please try again.",
+                variant: "destructive"
+              });
+            }
+          }}
+          events={activeIncidentId ? incidents[activeIncidentId].events : []}
         />
       </div>
 
