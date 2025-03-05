@@ -7,6 +7,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -36,6 +38,7 @@ export function IncidentSelector({
   onDeleteIncident,
 }: IncidentSelectorProps) {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [newIncidentName, setNewIncidentName] = useState('');
   const [newIncidentDescription, setNewIncidentDescription] = useState('');
 
@@ -45,6 +48,13 @@ export function IncidentSelector({
       setNewIncidentName('');
       setNewIncidentDescription('');
       setIsCreateDialogOpen(false);
+    }
+  };
+
+  const handleDeleteIncident = () => {
+    if (activeIncidentId) {
+      onDeleteIncident(activeIncidentId);
+      setIsDeleteDialogOpen(false);
     }
   };
 
@@ -101,13 +111,36 @@ export function IncidentSelector({
       </Dialog>
 
       {activeIncidentId && (
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => onDeleteIncident(activeIncidentId)}
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="icon">
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete Incident</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete this incident? This action cannot be undone.
+                All events associated with this incident will be permanently deleted.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setIsDeleteDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteIncident}
+              >
+                Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
