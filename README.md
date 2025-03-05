@@ -18,6 +18,7 @@ A visualization tool for mapping and analyzing attack lifecycles using MITRE ATT
 - Lateral movement tracking and visualization
 ![image](https://github.com/user-attachments/assets/d9efe2f5-6933-453c-a0bb-2f3656ccba83)
 - Multi-incident support
+  
 ![image](https://github.com/user-attachments/assets/08a2e538-3166-45ee-a0a0-a6ef5bb2ad7d)
 
 ## Tech Stack
