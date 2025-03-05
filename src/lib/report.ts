@@ -1,5 +1,6 @@
 import type { TimelineEvent, Artifact } from '@/pages/Index';
 import type { Incident } from '@/lib/incidents';
+import { v4 as uuidv4 } from "uuid";
 
 export const generateReport = (events: TimelineEvent[], incident: Incident): string => {
   const timestamp = new Date().toLocaleString();
@@ -84,4 +85,62 @@ ${incident.description ? `\nDescription:\n${incident.description}\n` : ''}
   });
 
   return report;
-}; 
+};
+
+export function parseReport(markdown: string): { incident: Incident; events: TimelineEvent[] } {
+  const lines = markdown.split('\n');
+  let incident: Incident = {
+    id: uuidv4(),
+    name: '',
+    description: '',
+    events: []
+  };
+  const events: TimelineEvent[] = [];
+  let currentEvent: Partial<TimelineEvent> | null = null;
+  let description = '';
+
+  for (const line of lines) {
+    if (line.startsWith('# Incident Report:')) {
+      incident.name = line.replace('# Incident Report:', '').trim();
+    } else if (line.startsWith('## Description')) {
+      // Start collecting description
+      description = '';
+    } else if (line.startsWith('## Timeline')) {
+      // End description collection and set it
+      incident.description = description.trim();
+    } else if (line.startsWith('### Event:')) {
+      // Save previous event if exists
+      if (currentEvent && currentEvent.title) {
+        events.push(currentEvent as TimelineEvent);
+      }
+      // Start new event
+      currentEvent = {
+        id: uuidv4(),
+        title: line.replace('### Event:', '').trim(),
+        description: '',
+        artifacts: [],
+        timestamp: new Date().toISOString().slice(0, 16)
+      };
+    } else if (line.startsWith('- Timestamp:') && currentEvent) {
+      currentEvent.timestamp = line.replace('- Timestamp:', '').trim();
+    } else if (line.startsWith('- Description:') && currentEvent) {
+      currentEvent.description = line.replace('- Description:', '').trim();
+    } else if (line.startsWith('- Tactic:') && currentEvent) {
+      currentEvent.tactic = line.replace('- Tactic:', '').trim();
+    } else if (line.startsWith('- Technique:') && currentEvent) {
+      currentEvent.technique = line.replace('- Technique:', '').trim();
+    } else if (!line.startsWith('#') && !line.startsWith('-') && line.trim()) {
+      // If we're in description section, append to description
+      if (!currentEvent) {
+        description += line + '\n';
+      }
+    }
+  }
+
+  // Add the last event if exists
+  if (currentEvent && currentEvent.title) {
+    events.push(currentEvent as TimelineEvent);
+  }
+
+  return { incident, events };
+} 

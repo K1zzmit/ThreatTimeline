@@ -9,6 +9,7 @@ import type { Incident } from '@/lib/incidents';
 import { ActionButtons } from './ActionButtons';
 import { Button } from './ui/button';
 import { Plus } from 'lucide-react';
+import { v4 as uuidv4 } from 'uuid';
 
 interface TimelineProps {
   events: TimelineEvent[];
@@ -97,13 +98,8 @@ const Timeline = forwardRef<TimelineRef, TimelineProps>(({
               incident={incident}
               onEditMode={onEditModeToggle}
               isEditMode={isEditMode}
+              onAddEvent={() => handleAddEvent()}
             />
-            {isEditMode && (
-              <Button onClick={() => handleAddEvent()} size="sm">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Event
-              </Button>
-            )}
           </div>
         </div>
         <div className="flex-1 overflow-auto">
@@ -138,7 +134,10 @@ const Timeline = forwardRef<TimelineRef, TimelineProps>(({
             events={events}
             onEventChange={setSelectedEvent}
             onSave={handleSave}
-            onLateralMovement={onLateralMovement}
+            onLateralMovement={(sourceEvent, destinationHost) => {
+              onLateralMovement(sourceEvent, destinationHost);
+              setIsDialogOpen(false);
+            }}
             isEditMode={isEditMode}
           />
         )}

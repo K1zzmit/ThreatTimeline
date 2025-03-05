@@ -132,7 +132,7 @@ const Flow: React.FC<VisualizationProps> = ({
   const reactFlowWrapper = React.useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const { fitView } = useReactFlow();
+  const { fitView, getNodes } = useReactFlow();
 
   // Define node and edge types
   const nodeTypes = React.useMemo(() => ({ default: EventNode }), []);
@@ -151,40 +151,57 @@ const Flow: React.FC<VisualizationProps> = ({
     }
   };
 
-  const handleExportPng = useCallback(async () => {
+  const handleExportImage = useCallback(async (exportFunc: typeof toPng | typeof toSvg, fileType: 'png' | 'svg') => {
     if (!reactFlowWrapper.current) return;
 
     try {
-      const dataUrl = await toPng(reactFlowWrapper.current, {
-        backgroundColor: "#1a1a1a",
-        quality: 1,
+      // Get all nodes and calculate bounds
+      const nodes = getNodes();
+      const nodesBounds = getNodesBounds(nodes);
+      
+      // Add padding to the bounds
+      const padding = 50;
+      nodesBounds.x -= padding;
+      nodesBounds.y -= padding;
+      nodesBounds.width += 2 * padding;
+      nodesBounds.height += 2 * padding;
+
+      // Calculate viewport that fits all nodes
+      const viewport = getViewportForBounds(
+        nodesBounds,
+        nodesBounds.width,
+        nodesBounds.height,
+        0.5,
+        2
+      );
+
+      const dataUrl = await exportFunc(reactFlowWrapper.current.querySelector('.react-flow__viewport') as HTMLElement, {
+        backgroundColor: "transparent",
+        width: nodesBounds.width,
+        height: nodesBounds.height,
+        style: {
+          width: `${nodesBounds.width}px`,
+          height: `${nodesBounds.height}px`,
+          transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
+        },
       });
       
       const link = document.createElement("a");
-      link.download = "threat-timeline.png";
+      link.download = `threat-timeline.${fileType}`;
       link.href = dataUrl;
       link.click();
     } catch (error) {
-      console.error("Error exporting PNG:", error);
+      console.error(`Error exporting ${fileType.toUpperCase()}:`, error);
     }
-  }, []);
+  }, [getNodes]);
 
-  const handleExportSvg = useCallback(async () => {
-    if (!reactFlowWrapper.current) return;
+  const handleExportPng = useCallback(() => {
+    handleExportImage(toPng, 'png');
+  }, [handleExportImage]);
 
-    try {
-      const dataUrl = await toSvg(reactFlowWrapper.current, {
-        backgroundColor: "#1a1a1a",
-      });
-      
-      const link = document.createElement("a");
-      link.download = "threat-timeline.svg";
-      link.href = dataUrl;
-      link.click();
-    } catch (error) {
-      console.error("Error exporting SVG:", error);
-    }
-  }, []);
+  const handleExportSvg = useCallback(() => {
+    handleExportImage(toSvg, 'svg');
+  }, [handleExportImage]);
 
   // Update nodes and edges when events change or saved positions change
   React.useEffect(() => {
@@ -222,48 +239,50 @@ const Flow: React.FC<VisualizationProps> = ({
   }, [nodes, onNodesChange, onPositionsChange]);
 
   return (
-    <div className="w-full h-full" ref={reactFlowWrapper}>
-      <style>
-        {`
-          @keyframes dashdraw {
-            from {
-              stroke-dashoffset: 10;
+    <div className="relative h-[800px] border rounded-md bg-background">
+      <div ref={reactFlowWrapper} className="h-full">
+        <style>
+          {`
+            @keyframes dashdraw {
+              from {
+                stroke-dashoffset: 10;
+              }
+              to {
+                stroke-dashoffset: 0;
+              }
             }
-            to {
-              stroke-dashoffset: 0;
-            }
-          }
-        `}
-      </style>
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={handleNodesChange}
-        onEdgesChange={onEdgesChange}
-        onNodeDragStop={handleNodeDragStop}
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
-        defaultEdgeOptions={{
-          type: 'default'
-        }}
-        fitView
-      >
-        <Panel position="top-right" className="bg-background/95 p-2 rounded-lg shadow-lg">
-          <ActionButtons
-            page="visualization"
-            onResetLayout={onResetRequest}
-            onExportPng={handleExportPng}
-            onExportSvg={handleExportSvg}
+          `}
+        </style>
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={handleNodesChange}
+          onEdgesChange={onEdgesChange}
+          onNodeDragStop={handleNodeDragStop}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          defaultEdgeOptions={{
+            type: 'default'
+          }}
+          fitView
+        >
+          <Panel position="top-right" className="bg-background/95 p-2 rounded-lg shadow-lg">
+            <ActionButtons
+              page="visualization"
+              onResetLayout={onResetRequest}
+              onExportPng={handleExportPng}
+              onExportSvg={handleExportSvg}
+            />
+          </Panel>
+          <Background />
+          <Controls className="bg-background/95 border-border" />
+          <MiniMap 
+            className="bg-background/95 !border-border"
+            nodeColor="hsl(var(--muted))"
+            maskColor="hsl(var(--background)/50)"
           />
-        </Panel>
-        <Background />
-        <Controls className="bg-background/95 border-border" />
-        <MiniMap 
-          className="bg-background/95 !border-border"
-          nodeColor="hsl(var(--muted))"
-          maskColor="hsl(var(--background)/50)"
-        />
-      </ReactFlow>
+        </ReactFlow>
+      </div>
     </div>
   );
 };
